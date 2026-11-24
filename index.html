@@ -20,7 +20,7 @@
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
     body { background: radial-gradient(ellipse at 50% 30%, #24262d 0, #15161a 45%, #101114 100%); }
     button { font: inherit; color: inherit; }
-    .app { display: grid; grid-template-rows: 66px minmax(0, 1fr) auto; width: 100%; height: 100dvh; min-height: 0; }
+    .app { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 66px minmax(0, 1fr) auto; width: 100%; height: 100dvh; min-width: 0; min-height: 0; }
     .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--line); }
     .brand { display: flex; min-width: 0; align-items: center; gap: 11px; }
     .brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 12px; color: #11140b; background: var(--accent); font-size: 19px; font-weight: 900; }
@@ -32,9 +32,9 @@
     .icon-button:active { transform: scale(.96); }
     .icon-button:disabled { opacity: .35; cursor: default; transform: none; }
     .icon-button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-    .main { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; padding: 14px 18px 0; }
-    .stage { position: relative; display: grid; min-height: 0; place-items: center; overflow: hidden; border: 1px solid #ffffff0d; border-radius: 22px; background: #090a0d8c; }
-    .photo { display: block; max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; transform-origin: center; will-change: transform; }
+    .main { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; min-width: 0; min-height: 0; padding: 14px 18px 0; }
+    .stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); width: 100%; min-width: 0; min-height: 0; place-items: center; overflow: hidden; border: 1px solid #ffffff0d; border-radius: 22px; background: #090a0d8c; }
+    .photo { display: block; width: auto; height: auto; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; transform-origin: center; will-change: transform; }
     .stage.dragging { cursor: grabbing; }
     .stage.zoomed { cursor: grab; }
     .side-nav { position: absolute; top: 50%; z-index: 2; transform: translateY(-50%); }
@@ -46,8 +46,8 @@
     .caption { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 50px; color: var(--muted); font-size: 12px; }
     .filename { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .zoom-level { min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
-    .bottom { padding: 0 18px calc(13px + var(--safe-bottom)); }
-    .filmstrip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 12px; scrollbar-color: #ffffff35 transparent; scrollbar-width: thin; }
+    .bottom { min-width: 0; padding: 0 18px calc(13px + var(--safe-bottom)); }
+    .filmstrip { display: flex; min-width: 0; max-width: 100%; gap: 8px; overflow-x: auto; padding: 10px 2px 12px; scrollbar-color: #ffffff35 transparent; scrollbar-width: thin; }
     .thumb { position: relative; width: 58px; height: 58px; flex: 0 0 auto; overflow: hidden; padding: 0; border: 2px solid transparent; border-radius: 12px; background: #25262b; cursor: pointer; opacity: .64; }
     .thumb img { width: 100%; height: 100%; object-fit: cover; }
     .thumb.active { border-color: var(--accent); opacity: 1; }
