@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101114">
+  <title>Photo Gallery</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #101114;
+      color: #f5f5f6;
+      --muted: #a7a8af;
+      --line: #ffffff19;
+      --accent: #c5f06b;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body { background: radial-gradient(ellipse at 50% 30%, #24262d 0, #15161a 45%, #101114 100%); }
+    button { font: inherit; color: inherit; }
+    .app { display: grid; grid-template-rows: 66px minmax(0, 1fr) auto; width: 100%; height: 100dvh; min-height: 0; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; min-width: 0; align-items: center; gap: 11px; }
+    .brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 12px; color: #11140b; background: var(--accent); font-size: 19px; font-weight: 900; }
+    .brand-title { overflow: hidden; font-size: 15px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+    .counter { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .top-actions, .toolbar, .nav-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-button { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border: 1px solid var(--line); border-radius: 14px; background: #ffffff0a; cursor: pointer; transition: background .18s, transform .18s, border-color .18s; }
+    .icon-button:hover { transform: translateY(-1px); border-color: #ffffff40; background: #ffffff17; }
+    .icon-button:active { transform: scale(.96); }
+    .icon-button:disabled { opacity: .35; cursor: default; transform: none; }
+    .icon-button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .main { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; padding: 14px 18px 0; }
+    .stage { position: relative; display: grid; min-height: 0; place-items: center; overflow: hidden; border: 1px solid #ffffff0d; border-radius: 22px; background: #090a0d8c; }
+    .photo { display: block; max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; transform-origin: center; will-change: transform; }
+    .stage.dragging { cursor: grabbing; }
+    .stage.zoomed { cursor: grab; }
+    .side-nav { position: absolute; top: 50%; z-index: 2; transform: translateY(-50%); }
+    .side-nav.prev { left: 14px; }
+    .side-nav.next { right: 14px; }
+    .side-nav .icon-button { width: 44px; height: 44px; border-radius: 50%; background: #0c0d10c9; backdrop-filter: blur(12px); }
+    .empty { max-width: 360px; padding: 28px; color: var(--muted); text-align: center; line-height: 1.6; }
+    .empty strong { display: block; margin-bottom: 8px; color: #fff; font-size: 18px; }
+    .caption { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 50px; color: var(--muted); font-size: 12px; }
+    .filename { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .zoom-level { min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+    .bottom { padding: 0 18px calc(13px + var(--safe-bottom)); }
+    .filmstrip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 12px; scrollbar-color: #ffffff35 transparent; scrollbar-width: thin; }
+    .thumb { position: relative; width: 58px; height: 58px; flex: 0 0 auto; overflow: hidden; padding: 0; border: 2px solid transparent; border-radius: 12px; background: #25262b; cursor: pointer; opacity: .64; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb.active { border-color: var(--accent); opacity: 1; }
+    .controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .hint { color: var(--muted); font-size: 11px; }
+    .nav-button { min-width: 112px; height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 14px; background: #ffffff0a; font-size: 13px; font-weight: 650; cursor: pointer; }
+    .nav-button.primary { border-color: transparent; background: var(--accent); color: #15190d; }
+    .nav-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    @media (min-width: 760px) {
+      .app { max-width: 980px; margin: auto; border-right: 1px solid var(--line); border-left: 1px solid var(--line); }
+      .main { padding-right: 28px; padding-left: 28px; }
+      .bottom { padding-right: 28px; padding-left: 28px; }
+      .thumb { width: 66px; height: 66px; }
+    }
+    @media (max-width: 420px) {
+      .topbar { height: 58px; padding: 0 13px; }
+      .app { grid-template-rows: 58px minmax(0, 1fr) auto; }
+      .main { padding: 9px 9px 0; }
+      .stage { border-radius: 16px; }
+      .side-nav.prev { left: 7px; }
+      .side-nav.next { right: 7px; }
+      .bottom { padding-right: 9px; padding-left: 9px; }
+      .thumb { width: 52px; height: 52px; }
+      .nav-button { min-width: 94px; height: 40px; }
+      .hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">▧</div>
+        <div class="brand-title">Photo Gallery</div>
+      </div>
+      <div class="top-actions">
+        <span class="counter" id="counter" aria-live="polite">Loading photos…</span>
+        <button class="icon-button" id="fullscreen" type="button" aria-label="Toggle fullscreen" title="Fullscreen">
+          <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg>
+        </button>
+      </div>
+    </header>
+    <main class="main">
+      <section class="stage" id="stage" aria-label="Photo viewer">
+        <div class="empty" id="empty" hidden><strong>No photos found</strong>The image files listed for this gallery could not be loaded. Keep this HTML file in the same folder as the original photos.</div>
+        <img class="photo" id="photo" alt="" draggable="false">
+        <div class="side-nav prev"><button class="icon-button" id="prev" type="button" aria-label="Previous photo"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button></div>
+        <div class="side-nav next"><button class="icon-button" id="next" type="button" aria-label="Next photo"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button></div>
+      </section>
+      <div class="caption">
+        <span class="filename" id="filename"></span>
+        <div class="toolbar">
+          <button class="icon-button" id="zoomOut" type="button" aria-label="Zoom out" title="Zoom out"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5M8 10.8h5.6"/></svg></button>
+          <span class="zoom-level" id="zoomLevel">100%</span>
+          <button class="icon-button" id="zoomIn" type="button" aria-label="Zoom in" title="Zoom in"><svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5M8 10.8h5.6M10.8 8v5.6"/></svg></button>
+          <button class="icon-button" id="resetZoom" type="button" aria-label="Reset zoom" title="Reset zoom"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </main>
+    <footer class="bottom">
+      <div class="filmstrip" id="filmstrip" aria-label="Photo thumbnails"></div>
+      <div class="controls">
+        <button class="nav-button" id="previousButton" type="button"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>Previous</button>
+        <span class="hint">Swipe to browse · Pinch or use + / − to zoom</span>
+        <button class="nav-button primary" id="nextButton" type="button">Next<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+      </div>
+    </footer>
+  </div>
+  <script>
+    const photos = ["WhatsApp Image 2026-11-24 at 1.56.40 PM.jpeg","WhatsApp Image 2026-11-24 at 1.56.44 PM.jpeg","WhatsApp Image 2026-11-24 at 1.56.59 PM.jpeg","WhatsApp Image 2026-11-24 at 1.57.10 PM.jpeg","WhatsApp Image 2026-11-24 at 1.57.24 PM.jpeg","WhatsApp Image 2026-11-24 at 1.57.33 PM.jpeg","WhatsApp Image 2026-11-24 at 1.57.44 PM.jpeg","WhatsApp Image 2026-11-24 at 1.57.55 PM.jpeg","WhatsApp Image 2026-11-24 at 1.58.01 PM.jpeg","WhatsApp Image 2026-11-24 at 1.58.31 PM.jpeg","WhatsApp Image 2026-11-24 at 1.59.30 PM.jpeg","WhatsApp Image 2026-11-24 at 1.59.55 PM.jpeg","WhatsApp Image 2026-11-24 at 2.00.00 PM.jpeg","WhatsApp Image 2026-11-24 at 2.00.40 PM.jpeg","WhatsApp Image 2026-11-24 at 2.01.24 PM.jpeg","WhatsApp Image 2026-11-24 at 2.01.52 PM.jpeg","WhatsApp Image 2026-11-24 at 2.02.39 PM.jpeg","WhatsApp Image 2026-11-24 at 2.03.12 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.28 PM (1).jpeg","WhatsApp Image 2026-11-24 at 2.04.28 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.29 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.31 PM (1).jpeg","WhatsApp Image 2026-11-24 at 2.04.31 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.33 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.35 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.38 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.40 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.41 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.42 PM (1).jpeg","WhatsApp Image 2026-11-24 at 2.04.42 PM (2).jpeg","WhatsApp Image 2026-11-24 at 2.04.42 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.45 PM (1).jpeg","WhatsApp Image 2026-11-24 at 2.04.45 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.46 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.47 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.48 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.49 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.50 PM (1).jpeg","WhatsApp Image 2026-11-24 at 2.04.50 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.51 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.53 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.54 PM.jpeg","WhatsApp Image 2026-11-24 at 2.04.57 PM.jpeg","WhatsApp Image 2026-11-24 at 2.05.08 PM.jpeg","WhatsApp Image 2026-11-24 at 2.05.34 PM.jpeg","WhatsApp Image 2026-11-24 at 2.05.37 PM.jpeg","WhatsApp Image 2026-11-24 at 2.05.38 PM.jpeg","WhatsApp Image 2026-11-24 at 2.05.40 PM.jpeg","WhatsApp Image 2026-11-24 at 2.06.54 PM.jpeg","WhatsApp Image 2026-11-24 at 2.06.58 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.04 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.11 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.13 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.14 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.26 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.28 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.32 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.33 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.34 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.39 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.41 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.42 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.45 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.46 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.48 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.50 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.56 PM.jpeg","WhatsApp Image 2026-11-24 at 2.07.59 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.01 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.05 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.08 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.11 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.14 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.15 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.17 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.19 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.21 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.22 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.23 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.30 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.33 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.35 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.36 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.38 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.39 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.41 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.44 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.49 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.53 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.56 PM.jpeg","WhatsApp Image 2026-11-24 at 2.08.58 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.00 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.02 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.03 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.05 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.07 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.08 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.13 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.16 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.21 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.24 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.26 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.27 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.30 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.32 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.33 PM.jpeg","WhatsApp Image 2026-11-24 at 2.09.41 PM.jpeg","WhatsApp Image 2026-11-24 at 2.18.53 PM.jpeg","WhatsApp Image 2026-11-24 at 2.18.56 PM.jpeg","WhatsApp Image 2026-11-24 at 6.44.45 PM.jpeg","WhatsApp Image 2026-11-24 at 6.44.46 PM.jpeg","WhatsApp Image 2026-11-24 at 6.44.47 PM.jpeg","WhatsApp Image 2026-11-24 at 6.44.51 PM.jpeg","WhatsApp Image 2026-11-24 at 6.45.01 PM.jpeg","WhatsApp Image 2026-11-24 at 6.45.04 PM.jpeg","WhatsApp Image 2026-11-24 at 6.45.08 PM.jpeg"];
+    const photo = document.getElementById('photo');
+    const stage = document.getElementById('stage');
+    const counter = document.getElementById('counter');
+    const filename = document.getElementById('filename');
+    const zoomLevel = document.getElementById('zoomLevel');
+    const filmstrip = document.getElementById('filmstrip');
+    const empty = document.getElementById('empty');
+    let index = 0;
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    let pointers = new Map();
+    let gestureStart = null;
+    let pinchStart = null;
+
+    const imageUrl = (name) => encodeURIComponent(name);
+    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const setZoom = (value) => {
+      scale = clamp(value, 1, 5);
+      if (scale === 1) offsetX = offsetY = 0;
+      photo.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+      zoomLevel.textContent = `${Math.round(scale * 100)}%`;
+      stage.classList.toggle('zoomed', scale > 1);
+      document.getElementById('zoomOut').disabled = scale <= 1;
+      document.getElementById('zoomIn').disabled = scale >= 5;
+    };
+    const showPhoto = (nextIndex) => {
+      if (!photos.length) return;
+      index = (nextIndex + photos.length) % photos.length;
+      photo.src = imageUrl(photos[index]);
+      photo.alt = photos[index];
+      filename.textContent = photos[index];
+      counter.textContent = `${index + 1} / ${photos.length}`;
+      setZoom(1);
+      [...filmstrip.children].forEach((thumb, i) => {
+        thumb.classList.toggle('active', i === index);
+        thumb.setAttribute('aria-current', i === index ? 'true' : 'false');
+      });
+      filmstrip.children[index]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+      const following = new Image();
+      following.src = imageUrl(photos[(index + 1) % photos.length]);
+    };
+    const goPrevious = () => showPhoto(index - 1);
+    const goNext = () => showPhoto(index + 1);
+
+    if (photos.length) {
+      empty.hidden = true;
+      counter.textContent = `1 / ${photos.length}`;
+      photos.forEach((name, i) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'thumb';
+        button.setAttribute('aria-label', `Open photo ${i + 1}`);
+        const thumbnail = document.createElement('img');
+        thumbnail.src = imageUrl(name);
+        thumbnail.alt = '';
+        thumbnail.loading = 'lazy';
+        button.append(thumbnail);
+        button.addEventListener('click', () => showPhoto(i));
+        filmstrip.append(button);
+      });
+      showPhoto(0);
+    } else {
+      photo.hidden = true;
+      empty.hidden = false;
+      counter.textContent = '0 photos';
+      document.getElementById('prev').disabled = true;
+      document.getElementById('next').disabled = true;
+      document.getElementById('previousButton').disabled = true;
+      document.getElementById('nextButton').disabled = true;
+    }
+
+    document.getElementById('prev').addEventListener('click', goPrevious);
+    document.getElementById('next').addEventListener('click', goNext);
+    document.getElementById('previousButton').addEventListener('click', goPrevious);
+    document.getElementById('nextButton').addEventListener('click', goNext);
+    document.getElementById('zoomIn').addEventListener('click', () => setZoom(scale + 0.25));
+    document.getElementById('zoomOut').addEventListener('click', () => setZoom(scale - 0.25));
+    document.getElementById('resetZoom').addEventListener('click', () => setZoom(1));
+    document.getElementById('fullscreen').addEventListener('click', async () => {
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else await document.documentElement.requestFullscreen();
+      } catch (error) { console.warn('Fullscreen is unavailable in this browser.', error); }
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft') goPrevious();
+      if (event.key === 'ArrowRight') goNext();
+      if (event.key === '+' || event.key === '=') setZoom(scale + 0.25);
+      if (event.key === '-') setZoom(scale - 0.25);
+      if (event.key === 'Escape' && scale > 1) setZoom(1);
+    });
+    stage.addEventListener('wheel', (event) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      setZoom(scale + (event.deltaY < 0 ? 0.2 : -0.2));
+    }, { passive: false });
+    stage.addEventListener('pointerdown', (event) => {
+      stage.setPointerCapture(event.pointerId);
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pointers.size === 1) {
+        gestureStart = { x: event.clientX, y: event.clientY, offsetX, offsetY };
+      } else if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        pinchStart = { distance: Math.hypot(a.x - b.x, a.y - b.y), scale };
+      }
+    });
+    stage.addEventListener('pointermove', (event) => {
+      if (!pointers.has(event.pointerId)) return;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pointers.size === 2 && pinchStart) {
+        const [a, b] = [...pointers.values()];
+        const distance = Math.hypot(a.x - b.x, a.y - b.y);
+        setZoom(pinchStart.scale * distance / pinchStart.distance);
+      } else if (pointers.size === 1 && gestureStart) {
+        const dx = event.clientX - gestureStart.x;
+        const dy = event.clientY - gestureStart.y;
+        if (scale > 1) {
+          offsetX = gestureStart.offsetX + dx;
+          offsetY = gestureStart.offsetY + dy;
+          setZoom(scale);
+          stage.classList.add('dragging');
+        }
+      }
+    });
+    const endPointer = (event) => {
+      const start = gestureStart;
+      pointers.delete(event.pointerId);
+      stage.classList.remove('dragging');
+      if (pointers.size < 2) pinchStart = null;
+      if (pointers.size === 0 && start && scale === 1) {
+        const dx = event.clientX - start.x;
+        const dy = event.clientY - start.y;
+        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+          dx < 0 ? goNext() : goPrevious();
+        }
+      }
+      if (pointers.size === 0) gestureStart = null;
+    };
+    stage.addEventListener('pointerup', endPointer);
+    stage.addEventListener('pointercancel', endPointer);
+    photo.addEventListener('error', () => {
+      empty.hidden = false;
+      empty.querySelector('strong').textContent = 'Photo could not be opened';
+    });
+    photo.addEventListener('load', () => {
+      empty.hidden = true;
+    });
+  </script>
+</body>
+</html>
